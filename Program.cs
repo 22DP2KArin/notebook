@@ -1,27 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 class Program
 {
     static void Main()
     {
-        // Izveidojam lietotāju pārvaldības sistēmu
         UserManagement userManagement = new UserManagement();
 
-        // Pārbauda, vai ir saglabāti lietotāji
+        // Ielādē lietotājus no faila, ja tas pastāv
         if (File.Exists("users.txt"))
         {
             userManagement.LoadUsers("users.txt");
         }
 
-        // Lietotāja autentifikācijas
         User currentUser = null;
         while (currentUser == null)
         {
             Console.WriteLine("Lūdzu, pieteikties vai reģistrēties:");
-            Console.WriteLine("1. Pieteikties");
-            Console.WriteLine("2. Reģistrēties");
+            Console.WriteLine("+---------------------------------------+");
+            Console.WriteLine("|           - Pieteikties (1)           |");
+            Console.WriteLine("|           - Reģistrēties (2)          |");
+            Console.WriteLine("+---------------------------------------+");
             int choice = GetUserChoice(1, 2);
             switch (choice)
             {
@@ -34,102 +36,92 @@ class Program
             }
         }
 
+        // Galvenais cilpa, kurā lietotājs var izvēlēties darbību
         while (true)
         {
             Console.Clear();
-
-            // Izvēlnes opcijas
-            Console.WriteLine("|-----------Izvēlieties darbibu-----------|");
-            Console.WriteLine("| 1. Izveidot sarakstu                    |");
-            Console.WriteLine("| 2. Izveidot plānu                       |");
-            Console.WriteLine("| 3. Izveidot tabulu                      |");
-            Console.WriteLine("| 4. Pievienot filmu vai seriālu          |");
-            Console.WriteLine("| 5. Skatīt ierakstus                     |");
-            Console.WriteLine("| 6. Iziet                                |");
-            Console.WriteLine("|-----------------------------------------|");
-            // Iegūstam lietotāja izvēli
+            Console.WriteLine("+---------------------------------------+");
+            Console.WriteLine("|           Izvēlieties darbību         |");
+            Console.WriteLine("+---------------------------------------+");
+            Console.WriteLine("| 1. Izveidot sarakstu                  |");
+            Console.WriteLine("| 2. Izveidot plānu                     |");
+            Console.WriteLine("| 3. Izveidot tabulu                    |");
+            Console.WriteLine("| 4. Pievienot filmu vai seriālu        |");
+            Console.WriteLine("| 5. Skatīt ierakstus                   |");
+            Console.WriteLine("| 6. Iziet                              |");
+            Console.WriteLine("+---------------------------------------+");
             int choice = GetUserChoice(1, 6);
-
-            // Notīra konsoli pēc izvēles iegūšanas
             Console.Clear();
-
-            // Atkarībā no izvēles veicam darbību
             switch (choice)
             {
                 case 1:
-                    // Izveido sarakstu
+                    // Izveido sarakstu un pievieno to lietotāja ierakstiem
                     Console.Write("Ievadiet saraksta nosaukumu: ");
-                    string sarakstaNosaukums = Console.ReadLine();
+                    string listTitle = Console.ReadLine();
                     Console.Write("Ievadiet saraksta vienības (atdalot ar komatiem): ");
-                    string[] sarakstaVienibas = Console.ReadLine().Split(',');
-                    ListEntry sarakstaIeraksts = new ListEntry(sarakstaNosaukums, sarakstaVienibas);
-                    currentUser.AddEntry(sarakstaIeraksts);
+                    string[] listItems = Console.ReadLine().Split(',');
+                    ListEntry listEntry = new ListEntry(listTitle, listItems);
+                    currentUser.AddEntry(listEntry);
                     break;
-
                 case 2:
-                    // Izveido plānu
+                    // Izveido plānu un pievieno to lietotāja ierakstiem
                     Console.Write("Ievadiet plana nosaukumu: ");
-                    string planaNosaukums = Console.ReadLine();
+                    string planTitle = Console.ReadLine();
                     Console.Write("Ievadiet plana vienības (katra vienība jaunā rindā, ievadiet 'done', lai pabeigtu): ");
-                    List<string> planaVienibas = new List<string>();
+                    List<string> planItems = new List<string>();
                     string input;
                     while ((input = Console.ReadLine()) != "done")
                     {
-                        planaVienibas.Add(input);
+                        planItems.Add(input);
                     }
-                    PlanEntry planaIeraksts = new PlanEntry(planaNosaukums, planaVienibas);
-                    currentUser.AddEntry(planaIeraksts);
+                    PlanEntry planEntry = new PlanEntry(planTitle, planItems);
+                    currentUser.AddEntry(planEntry);
                     break;
-
                 case 3:
-                    // Izveido tabulu
+                    // Izveido tabulu un pievieno to lietotāja ierakstiem
                     Console.Write("Ievadiet tabulas nosaukumu: ");
-                    string tabulasNosaukums = Console.ReadLine();
+                    string tableTitle = Console.ReadLine();
                     Console.Write("Ievadiet tabulas rindas (katra rinda jaunā rindā, kolonnas atdalītas ar komatiem, ievadiet 'done', lai pabeigtu): ");
-                    List<string[]> tabulasRindas = new List<string[]>();
-                    string rindasIevade;
-                    while ((rindasIevade = Console.ReadLine()) != "done")
+                    List<string[]> tableRows = new List<string[]>();
+                    string rowInput;
+                    while ((rowInput = Console.ReadLine()) != "done")
                     {
-                        string[] kolonnas = rindasIevade.Split(',');
-                        tabulasRindas.Add(kolonnas);
+                        string[] columns = rowInput.Split(',');
+                        tableRows.Add(columns);
                     }
-                    TableEntry tabulasIeraksts = new TableEntry(tabulasNosaukums, tabulasRindas);
-                    currentUser.AddEntry(tabulasIeraksts);
+                    TableEntry tableEntry = new TableEntry(tableTitle, tableRows);
+                    currentUser.AddEntry(tableEntry);
                     break;
-
                 case 4:
-                    // Pievieno filmu vai serialu
+                    // Pievieno filmu vai seriālu ierakstu lietotāja ierakstiem
                     Console.Write("Ievadiet nosaukumu: ");
-                    string nosaukums = Console.ReadLine();
-                    Console.Write("Ievadiet zanru: ");
-                    string zanrs = Console.ReadLine();
-                    Console.Write("Ievadiet novertejumu: ");
-                    int novertejums = GetUserChoice(1, 10);
-                    MovieOrSeriesEntry ieraksts = new MovieOrSeriesEntry(nosaukums, zanrs, novertejums);
-                    currentUser.AddEntry(ieraksts);
+                    string name = Console.ReadLine();
+                    Console.Write("Ievadiet žanru: ");
+                    string genre = Console.ReadLine();
+                    Console.Write("Ievadiet novērtējumu: ");
+                    int rating = GetUserChoice(1, 10);
+                    MovieOrSeriesEntry movieOrSeriesEntry = new MovieOrSeriesEntry(name, genre, rating);
+                    currentUser.AddEntry(movieOrSeriesEntry);
                     break;
-
                 case 5:
-                    // Skatit ierakstus
+                    // Attēlo lietotāja ierakstus
                     currentUser.DisplayEntries();
                     break;
-
                 case 6:
-                    // Iziet
+                    // Iziet no programmas, saglabājot lietotājus
                     userManagement.SaveUsers("users.txt");
                     Console.WriteLine("Visu labu!");
                     Environment.Exit(0);
                     break;
             }
-
-            Console.WriteLine("Nospiediet jebkuru taustinu, lai turpinātu...");
+            Console.WriteLine("Nospiediet jebkuru taustiņu, lai turpinātu...");
             Console.ReadKey();
         }
     }
 
-    // Funkcija, kas iegūst lietotāja izvēli noteiktā diapazonā
     static int GetUserChoice(int min, int max)
     {
+        // Iegūst un validē lietotāja izvēli no konsoles
         int choice;
         while (!int.TryParse(Console.ReadLine(), out choice) || choice < min || choice > max)
         {
@@ -139,94 +131,94 @@ class Program
     }
 }
 
-class Entry
+abstract class Entry
 {
-    protected string Nosaukums;
+    protected string Title;
 
-    public Entry(string nosaukums)
+    public Entry(string title)
     {
-        Nosaukums = nosaukums;
+        Title = title;
     }
 
     public virtual void Display()
     {
-        Console.WriteLine($"Nosaukums: {Nosaukums}");
+        Console.WriteLine($"Nosaukums: {Title}");
     }
 }
 
 class ListEntry : Entry
 {
-    private string[] Vienibas;
+    private string[] Items;
 
-    public ListEntry(string nosaukums, string[] vienibas) : base(nosaukums)
+    public ListEntry(string title, string[] items) : base(title)
     {
-        Vienibas = vienibas;
+        Items = items;
     }
 
     public override void Display()
     {
-        Console.WriteLine($"Saraksts: {Nosaukums}");
-        foreach (var vieniba in Vienibas)
+        Console.WriteLine($"Saraksts: {Title}");
+        foreach (var item in Items)
         {
-            Console.WriteLine($"-{vieniba}");
+            Console.WriteLine($"|-{item}");
         }
     }
 }
 
 class PlanEntry : Entry
 {
-    private List<string> Vienibas;
+    private List<string> Items;
 
-    public PlanEntry(string nosaukums, List<string> vienibas) : base(nosaukums)
+    public PlanEntry(string title, List<string> items) : base(title)
     {
-        Vienibas = vienibas;
+        Items = items;
     }
 
     public override void Display()
     {
-        Console.WriteLine($"Plāns: {Nosaukums}");
-        foreach (var vieniba in Vienibas)
+        Console.WriteLine($"Plāns: {Title}");
+        foreach (var item in Items)
         {
-            Console.WriteLine($"-{vieniba}");
+            Console.WriteLine($"|-{item}");
         }
     }
 }
 
 class TableEntry : Entry
 {
-    private List<string[]> Rindas;
+    private List<string[]> Rows;
 
-    public TableEntry(string nosaukums, List<string[]> rindas) : base(nosaukums)
+    public TableEntry(string title, List<string[]> rows) : base(title)
     {
-        Rindas = rindas;
+        Rows = rows;
     }
 
     public override void Display()
     {
-        Console.WriteLine($"Tabula: {Nosaukums}");
-        foreach (var rinda in Rindas)
+        Console.WriteLine($"Tabula: {Title}");
+        foreach (var row in Rows)
         {
-            Console.WriteLine(string.Join(",", rinda));
+            Console.WriteLine($"| {string.Join(" | ", row)} |");
         }
     }
 }
 
 class MovieOrSeriesEntry : Entry
 {
-    private string Zanrs;
-    private int Novertejums;
+    private string Genre;
+    private int Rating;
 
-    public MovieOrSeriesEntry(string nosaukums, string zanrs, int novertejums) : base(nosaukums)
+    public MovieOrSeriesEntry(string title, string genre, int rating) : base(title)
     {
-        Zanrs = zanrs;
-        Novertejums = novertejums;
+        Genre = genre;
+        Rating = rating;
     }
 
     public override void Display()
     {
-        Console.WriteLine($"Nosaukums: {Nosaukums}");
-        Console.WriteLine($"Žanrs: {Zanrs}");
-        Console.WriteLine($"Novērtējums: {Novertejums}");
+        Console.WriteLine($"Nosaukums: {Title}");
+        Console.WriteLine($"Žanrs: {Genre}");
+        Console.WriteLine($"Novērtējums: {Rating}");
     }
 }
 
@@ -270,6 +262,7 @@ class UserManagement
 
     public void LoadUsers(string filePath)
     {
+        // Ielādē lietotājus no faila
         string[] lines = File.ReadAllLines(filePath);
         foreach (string line in lines)
         {
@@ -280,6 +273,7 @@ class UserManagement
 
     public void SaveUsers(string filePath)
     {
+        // Saglabā lietotājus failā
         List<string> lines = new List<string>();
         foreach (var user in Users)
         {
@@ -290,6 +284,7 @@ class UserManagement
 
     public User Login()
     {
+        // Lietotāja pieteikšanās
         Console.Write("Lietotājvārds: ");
         string username = Console.ReadLine();
         Console.Write("Parole: ");
@@ -310,15 +305,45 @@ class UserManagement
 
     public User Register()
     {
-        Console.Write("Jauns lietotājvārds: ");
+        // Lietotāja reģistrācija
+        Console.WriteLine("Jauns lietotājvārds (no 6 līdz 15 rakstzīmēm, vismaz 1 cipars un lielā burta): ");
         string username = Console.ReadLine();
-        Console.Write("Jauna parole: ");
+
+        // Pārbauda, vai lietotājvārds atbilst noteikumiem
+        while (!IsUsernameValid(username))
+        {
+            Console.WriteLine("Lietotājvārdam jābūt no 6 līdz 15 rakstzīmēm garumā, saturēt vismaz 1 ciparu un lielo burtu. Lūdzu, ievadiet vēlreiz: ");
+            username = Console.ReadLine();
+        }
+
+        // Izvada ziņu par veiksmīgu reģistrāciju un izveido jaunu lietotāju
+        Console.WriteLine("Lietotājvārda reģistrācija veiksmīga!");
+        Console.WriteLine("Jauna parole (minimāli 6 rakstzīmes, vismaz 1 cipars un lielā burta): ");
         string password = Console.ReadLine();
 
+        // Pārbauda, vai parole atbilst noteikumiem
+        while (!IsPasswordValid(password))
+        {
+            Console.WriteLine("Parolei jābūt vismaz 6 rakstzīmju garumā, saturēt vismaz 1 ciparu un lielo burtu. Lūdzu, ievadiet vēlreiz: ");
+            password = Console.ReadLine();
+        }
+
+        // Izveido jaunu lietotāju un pievieno to lietotāju sarakstam
         User newUser = new User(username, password);
         Users.Add(newUser);
-        Console.WriteLine("Reģistrācija veiksmīga!");
 
         return newUser;
+    }
+
+    private bool IsUsernameValid(string username)
+    {
+        // Pārbauda, vai lietotājvārds atbilst noteikumiem
+        return username.Length >= 6 && username.Length <= 15 && username.Any(char.IsDigit) && username.Any(char.IsUpper);
+    }
+
+    private bool IsPasswordValid(string password)
+    {
+        // Pārbauda, vai parole atbilst noteikumiem
+        return password.Length >= 6 && password.Any(char.IsDigit) && password.Any(char.IsUpper);
     }
 }
